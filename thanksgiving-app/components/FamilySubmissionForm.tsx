@@ -50,6 +50,30 @@ export default function FamilySubmissionForm() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
+      // Check current submission count
+      const { count, error: countError } = await supabase
+        .from('family_submissions')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        setSubmitStatus({
+          type: 'error',
+          message: 'Failed to check submission limit. Please try again.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if limit reached (500 submissions)
+      if (count !== null && count >= 500) {
+        setSubmitStatus({
+          type: 'error',
+          message: 'We have reached our maximum number of submissions. Thank you for your interest!',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('family_submissions')
         .insert([
